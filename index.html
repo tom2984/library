@@ -3,30 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
     <title>Document</title>
 </head>
 <body>
+
+    <button id="openDialog"> Press me </button>
+
+    <dialog id="formPopup">
+        <button id="closeDialog"> Close </button>
+        <form id="bookForm">
+            <section>
+                <legend> Books </legend>
+                <label for="title"> 
+                    Title
+                    <input type="text" id="title" required />
+                </label>
+                <label for="author"> 
+                    Author
+                    <input type="text" id="author" required />
+                </label>
+                <label for="pages"> 
+                    Pages
+                    <input type="number" id="pages" required />
+                </label>
+                <label for="read"> 
+                    Read?
+                    <input type="checkbox" id="read" />
+                </label>
+            </section>
+            <section>
+                <p>
+                  <button type="submit"> Upload Book </button>
+                </p>
+            </section>
+        </form>
+    </dialog>
+
+    <table class="booksTable">
+        <thead>
+            <tr class="Book-row">
+                <th>Title</th>
+                <th>Author</th>
+                <th>Pages</th>
+                <th>Read</th>
+                <th>ID</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="Book-data"></tbody>
+    </table>
+
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const myLibrary = [];
 
-        const myLibrary = [];
-
-        function Book(title, author, pages, read) {
-            this.title = title
-            this.author = author
-            this.pages = pages
-            this.read = read
-            this.Id = crypto.randomUUID()
-            this.info = function () {
-                return `${this.title} by ${this.author}, ${this.pages}, ${this.read}` 
+            function Book(title, author, pages, read) {
+                this.title = title;
+                this.author = author;
+                this.pages = pages;
+                this.read = read;
+                this.Id = crypto.randomUUID();
             }
-        };
-    
-        function addBookToLibrary(title, author, pages, read) {
-            myLibrary.map(Book(title, author, pages, read));
-        }
-        
-        
+
+            function addBookToLibrary(title, author, pages, read) {
+                myLibrary.push(new Book(title, author, pages, read));
+                libraryLoop();
+            }
+
+            function libraryLoop() {
+                const Books = document.getElementById("Book-data");
+                Books.innerHTML = ""; // ✅ Clears existing table rows to prevent duplicates
+
+                for (let book of myLibrary) {
+                    let row = document.createElement("tr");
+                    row.setAttribute("data-id", book.Id);
+
+                    let titleCell = document.createElement("td");
+                    titleCell.textContent = book.title;
+                    row.appendChild(titleCell);
+
+                    let authorCell = document.createElement("td");
+                    authorCell.textContent = book.author;
+                    row.appendChild(authorCell);
+
+                    let pagesCell = document.createElement("td");
+                    pagesCell.textContent = book.pages;
+                    row.appendChild(pagesCell);
+
+                    let readCell = document.createElement("td");
+                    readCell.textContent = book.read ? "Read" : "Not Read";
+                    row.appendChild(readCell);
+
+                    let idCell = document.createElement("td"); // ✅ Fixed tag type
+                    idCell.textContent = book.Id;
+                    row.appendChild(idCell);
+
+                    let actionCell = document.createElement("td");
+
+                    let buttonRemove = document.createElement("button");
+                    buttonRemove.textContent = "Remove";
+                    buttonRemove.addEventListener("click", function () {
+                        removeBook(book.Id);
+                    });
+                    actionCell.appendChild(buttonRemove);
+
+                    let buttonChange = document.createElement("button");
+                    buttonChange.textContent = "Change Read Status";
+                    buttonChange.addEventListener("click", function () {
+                        toggleReadStatus(book.Id);
+                    });
+                    actionCell.appendChild(buttonChange);
+
+                    row.appendChild(actionCell);
+                    Books.appendChild(row);
+                }
+            }
+
+            function removeBook(id) {
+                const index = myLibrary.findIndex(book => book.Id === id);
+                if (index !== -1) {
+                    myLibrary.splice(index, 1);
+                    libraryLoop();
+                }
+            }
+
+            function toggleReadStatus(id) {
+                const book = myLibrary.find(book => book.Id === id);
+                if (book) {
+                    book.read = !book.read;
+                    libraryLoop();
+                }
+            }
+
+            // Open/close dialog
+            const dialog = document.getElementById("formPopup");
+            const openButton = document.getElementById("openDialog");
+            const closeButton = document.getElementById("closeDialog");
+
+            openButton.addEventListener("click", () => {
+                dialog.showModal();
+            });
+
+            closeButton.addEventListener("click", () => {
+                dialog.close();
+            });
+
+            // Form submission
+            document.getElementById("bookForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // ✅ Prevents form from refreshing
+
+                let title = document.getElementById("title").value;
+                let author = document.getElementById("author").value;
+                let pages = document.getElementById("pages").value;
+                let read = document.getElementById("read").checked;
+
+                addBookToLibrary(title, author, pages, read);
+
+                dialog.close(); // ✅ Closes the modal after submission
+                this.reset(); // ✅ Clears the form
+            });
+
+            // Initial sample books
+            addBookToLibrary("Hello", "Cheese", 310, true);
+            addBookToLibrary("China", "Rice", 510, true);
+            addBookToLibrary("Africa", "Gamon", 710, true);
+            addBookToLibrary("Great Escape", "Jeff", 69, true);
+        });
     </script>
-    
 </body>
 </html>
